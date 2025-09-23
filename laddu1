@@ -1,0 +1,29 @@
+
+
+import os
+
+import api
+import metrics_collector
+
+app = FastAPI(title="Server WebApp", version="1.0")
+
+# Attach routers
+app.include_router(api.router, prefix="/api")
+
+# Serve static dashboard
+app.mount("/dashboard", StaticFiles(directory=".", html=True), name="dashboard")
+
+# Metrics collector
+metrics = metrics_collector.MetricsCollector()
+
+@app.on_event("startup")
+async def startup_event():
+    metrics.start_periodic_collection()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    metrics.stop()
+
+# Expose metrics to api.py
+api.metrics = metrics
+
